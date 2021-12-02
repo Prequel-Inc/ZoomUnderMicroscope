@@ -39,8 +39,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         setupPlayer()
-//        view_touch_handler.setOnTouchListener { _, event -> scaleGestureDetector.onTouchEvent(event) }
-        player_view.setOnTouchListener { _, event -> scaleGestureDetector.onTouchEvent(event) }
+        view_touch_handler.setOnTouchListener { _, event -> scaleGestureDetector.onTouchEvent(event) }
     }
 
     private fun setupPlayer() {
