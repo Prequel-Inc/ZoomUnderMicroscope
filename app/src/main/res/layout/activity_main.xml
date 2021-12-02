@@ -17,4 +17,15 @@
         app:layout_constraintDimensionRatio="1"
         app:use_controller="false" />
 
+<!--    <View-->
+<!--        android:id="@+id/view_touch_handler"-->
+<!--        android:layout_width="0dp"-->
+<!--        android:layout_height="0dp"-->
+<!--        android:background="@color/test_color"-->
+<!--        app:layout_constraintTop_toTopOf="@+id/player_view"-->
+<!--        app:layout_constraintBottom_toBottomOf="@+id/player_view"-->
+<!--        app:layout_constraintStart_toStartOf="@+id/player_view"-->
+<!--        app:layout_constraintEnd_toEndOf="@+id/player_view"-->
+<!--        />-->
+
 </androidx.constraintlayout.widget.ConstraintLayout>
