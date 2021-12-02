@@ -19,7 +19,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onScale(detector: ScaleGestureDetector): Boolean {
                 totalScale *= detector.scaleFactor
-                Log.d("Povarity", "totalScale = $totalScale scaleFactor = ${detector.scaleFactor}")
+                totalScale = totalScale.coerceIn(MIN_SCALE_FACTOR, MAX_SCALE_FACTOR)
                 player_view.scale(totalScale)
                 return true
             }
@@ -55,5 +55,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private val VIDEO_URI = Uri.parse("asset:///zoomable.mp4")
+        private const val MAX_SCALE_FACTOR = 5f
+        private const val MIN_SCALE_FACTOR = 1f
     }
 }
