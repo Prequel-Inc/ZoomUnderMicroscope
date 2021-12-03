@@ -5,7 +5,9 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.MotionEvent
 import android.view.ScaleGestureDetector
+import android.view.View
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
@@ -14,6 +16,55 @@ import kotlinx.android.synthetic.main.activity_main.*
 class MainActivity : AppCompatActivity() {
 
     private val exoPlayer by lazy { ExoPlayer.Builder(this).build() }
+
+    private val translationHandler by lazy {
+        object : View.OnTouchListener {
+            private var prevX = 0f
+            private var prevY = 0f
+            private var moveStarted = false
+            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+                if (event == null || (player_view?.scaleX ?: 1f) == 1f) return false
+
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> {
+                        prevX = event.x
+                        prevY = event.y
+                    }
+
+                    MotionEvent.ACTION_POINTER_UP -> {
+                        if (event.actionIndex == 0) {
+                            try {
+                                prevX = event.getX(1)
+                                prevY = event.getY(1)
+                            } catch (e: Exception) {
+                            }
+                        }
+                    }
+
+                    MotionEvent.ACTION_MOVE -> {
+                        if (event.pointerCount > 1) {
+                            prevX = event.x
+                            prevY = event.y
+                            return false
+                        }
+                        moveStarted = true
+                        player_view?.run {
+                            translationX += (event.x - prevX)
+                            translationY += (event.y - prevY)
+                        }
+                        prevX = event.x
+                        prevY = event.y
+                    }
+
+                    MotionEvent.ACTION_UP -> {
+                        if (!moveStarted) return false
+                    }
+                }
+                return true
+            }
+        }
+    }
+
     private val scaleGestureDetector by lazy {
         ScaleGestureDetector(this, object : ScaleGestureDetector.OnScaleGestureListener {
             var totalScale = 1f
@@ -48,7 +99,11 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         setupPlayer()
-        view_touch_handler.setOnTouchListener { _, event -> scaleGestureDetector.onTouchEvent(event) }
+        view_touch_handler.setOnTouchListener { view, event ->
+            scaleGestureDetector.onTouchEvent(event)
+            translationHandler.onTouch(view, event)
+            true
+        }
     }
 
     private fun setupPlayer() {
