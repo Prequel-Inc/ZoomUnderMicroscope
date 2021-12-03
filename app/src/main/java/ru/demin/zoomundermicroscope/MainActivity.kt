@@ -104,7 +104,13 @@ class MainActivity : AppCompatActivity() {
             override fun onScale(detector: ScaleGestureDetector): Boolean {
                 totalScale *= detector.scaleFactor
                 totalScale = totalScale.coerceIn(MIN_SCALE_FACTOR, MAX_SCALE_FACTOR)
-                player_view.scale(totalScale)
+                player_view.run {
+                    scale(totalScale)
+                    getContentViewTranslation().run {
+                        translationX += x
+                        translationY += y
+                    }
+                }
                 return true
             }
 
@@ -137,7 +143,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun translateToOriginalRect() {
-        getContentViewTranslation()?.takeIf { it != PointF(0f, 0f) }?.let { translation ->
+        getContentViewTranslation().takeIf { it != PointF(0f, 0f) }?.let { translation ->
             player_view?.let { view ->
                 view.animateWithDetach()
                     .translationXBy(translation.x)
@@ -148,8 +154,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun getContentViewTranslation(): PointF? {
-        return player_view?.run {
+    private fun getContentViewTranslation(): PointF {
+        return player_view.run {
             originContentRect.let { rect ->
                 val array = IntArray(2)
                 getLocationOnScreen(array)
