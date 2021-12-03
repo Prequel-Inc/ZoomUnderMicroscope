@@ -1,5 +1,6 @@
 package ru.demin.zoomundermicroscope
 
+import android.graphics.PointF
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -17,16 +18,24 @@ class MainActivity : AppCompatActivity() {
         ScaleGestureDetector(this, object : ScaleGestureDetector.OnScaleGestureListener {
             var totalScale = 1f
 
+            override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
+                player_view.run {
+                    val actualPivot = PointF(
+                        (detector.focusX - translationX + pivotX * (totalScale - 1)) / totalScale,
+                        (detector.focusY - translationY + pivotY * (totalScale - 1)) / totalScale,
+                    )
+
+                    translationX -= (pivotX - actualPivot.x) * (totalScale - 1)
+                    translationY -= (pivotY - actualPivot.y) * (totalScale - 1)
+                    setPivot(actualPivot)
+                }
+                return true
+            }
+
             override fun onScale(detector: ScaleGestureDetector): Boolean {
                 totalScale *= detector.scaleFactor
                 totalScale = totalScale.coerceIn(MIN_SCALE_FACTOR, MAX_SCALE_FACTOR)
                 player_view.scale(totalScale)
-                return true
-            }
-
-            override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
-                player_view.pivotX = detector.focusX
-                player_view.pivotY = detector.focusY
                 return true
             }
 
