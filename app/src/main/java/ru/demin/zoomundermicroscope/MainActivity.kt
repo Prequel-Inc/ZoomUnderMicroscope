@@ -1,6 +1,7 @@
 package ru.demin.zoomundermicroscope
 
 import android.graphics.PointF
+import android.graphics.Rect
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -8,6 +9,8 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
+import androidx.core.view.doOnLayout
+import androidx.core.view.isVisible
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
@@ -16,6 +19,13 @@ import kotlinx.android.synthetic.main.activity_main.*
 class MainActivity : AppCompatActivity() {
 
     private val exoPlayer by lazy { ExoPlayer.Builder(this).build() }
+    private val originContentRect by lazy {
+        player_view.run {
+            val array = IntArray(2)
+            getLocationOnScreen(array)
+            Rect(array[0], array[1], array[0] + width, array[1] + height)
+        }
+    }
 
     private val translationHandler by lazy {
         object : View.OnTouchListener {
@@ -58,9 +68,17 @@ class MainActivity : AppCompatActivity() {
 
                     MotionEvent.ACTION_UP -> {
                         if (!moveStarted) return false
+                        reset()
+                        translateToOriginalRect()
                     }
                 }
                 return true
+            }
+
+            private fun reset() {
+                prevX = 0f
+                prevY = 0f
+                moveStarted = false
             }
         }
     }
@@ -99,6 +117,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         setupPlayer()
+        player_view.doOnLayout { originContentRect }
         view_touch_handler.setOnTouchListener { view, event ->
             scaleGestureDetector.onTouchEvent(event)
             translationHandler.onTouch(view, event)
@@ -117,9 +136,43 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun translateToOriginalRect() {
+        getContentViewTranslation()?.takeIf { it != PointF(0f, 0f) }?.let { translation ->
+            player_view?.let { view ->
+                view.animateWithDetach()
+                    .translationXBy(translation.x)
+                    .translationYBy(translation.y)
+                    .apply { duration = CORRECT_LOCATION_ANIMATION_DURATION }
+                    .start()
+            }
+        }
+    }
+
+    private fun getContentViewTranslation(): PointF? {
+        return player_view?.run {
+            originContentRect.let { rect ->
+                val array = IntArray(2)
+                getLocationOnScreen(array)
+                PointF(
+                    when {
+                        array[0] > rect.left -> rect.left - array[0].toFloat()
+                        array[0] + width * scaleX < rect.right -> rect.right - (array[0] + width * scaleX)
+                        else -> 0f
+                    },
+                    when {
+                        array[1] > rect.top -> rect.top - array[1].toFloat()
+                        array[1] + height * scaleY < rect.bottom -> rect.bottom - (array[1] + height * scaleY)
+                        else -> 0f
+                    }
+                )
+            }
+        }
+    }
+
     companion object {
         private val VIDEO_URI = Uri.parse("asset:///zoomable.mp4")
         private const val MAX_SCALE_FACTOR = 5f
         private const val MIN_SCALE_FACTOR = 1f
+        private const val CORRECT_LOCATION_ANIMATION_DURATION = 300L
     }
 }
